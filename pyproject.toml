@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "gatorcatdashboard"
+version = "0.1.0"
+description = ""
+authors = ["Wesley Long <46755903+WesleyL30@users.noreply.github.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pymongo = "^4.0.1"
+python-dotenv = "^0.19.2"
+streamlit = "^1.5.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
