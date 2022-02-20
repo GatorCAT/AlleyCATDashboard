@@ -1,0 +1,5 @@
+# Ignore testing files
+*.mongodb
+
+# Vulnerable Files
+.env
