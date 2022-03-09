@@ -50,9 +50,8 @@ def get_bar_data(df):
 def get_line_data(df):
     """Manipulate data to visualize in line graph."""
     dftotal = pd.DataFrame({"total": df.sum(axis=1)})
-    dftotal["date"] = df["date"]
-    dftotal = dftotal.groupby(dftotal["date"]).mean()
-    print(len(df.columns)-1)
+    dftotal["Date"] = df["date"]
+    dftotal = dftotal.groupby(dftotal["Date"]).mean()
     dfaverage = dftotal/(len(df.columns)-1)
     return (dfaverage * 100)
 
@@ -76,7 +75,7 @@ def main():
     query = get_from_database(st.session_state["class"],st.session_state["assignments"])
     if st.session_state["Type"] == "Line":
         data = get_line_data(query)
-        fig = px.line(data, markers=True)
+        fig = px.line(data, labels={"value": "Average Checks Completed"}, markers=True)
         fig.update_yaxes(range=[0,100])
     elif st.session_state["Type"] == "Bar":
         data = get_bar_data(query)
