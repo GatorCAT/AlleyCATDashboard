@@ -12,7 +12,6 @@ username = os.getenv("username")
 mongopass = os.getenv("password")
 cluster_name = os.getenv("cluster_name")
 collection_name = os.getenv("collection_name")
-#print(mongopass)
 client = MongoClient(f"mongodb+srv://admin:{mongopass}@{cluster_name}.u4cyq.mongodb.net/{collection_name}?retryWrites=true&w=majority")
 db = client.test
 db = client.get_database(collection_name)
@@ -20,34 +19,52 @@ db = client.get_database(collection_name)
 # Uses st.cache to only rerun when the query changes or after 10 min.
 @st.cache(ttl=600)
 def get_class():
+    """Query database for all unique classes."""
     items = db.StudentData.distinct("class")
     items = list(items)  # make hashable for st.cache
     return items
 
+# Pull data from the collection.
+# Uses st.cache to only rerun when the query changes or after 10 min.
 @st.cache(ttl=600)
-def get_assignments(class_name):
-    output = db.StudentData.find({"class": class_name})
-    output = list(output)
-    return output
-
 def get_assignment(chosen_class):
+    """Query database for all assignments in a certain class."""
     results = db.StudentData.find({"class":chosen_class},{"_id":0,"assignment":1})
     choices = get_unique_assignments(results)
     return choices
 
 def get_unique_assignments(items):
+    """Remove duplicate assignments."""
     output = set()
     for entry in items:
         output.add(entry["assignment"])
     return list(output)
 
-def get_bar_data(org, assignment):
-    
-    output = db.StudentData.find({"class": org, "assignment": assignment},{"_id": 0, "checks": 1})
-    output = [document["checks"] for document in output]
-    df = pd.DataFrame(output)
+def get_bar_data(df):
+    """Manipulate data to visualize in bar graph."""
+    df = df.drop(["date"], axis=1)
+    length = len(df)
     total = df.sum(axis=0)
-    return (total/len(output))
+    return ((total/length)*100)
+
+def get_line_data(df):
+    """Manipulate data to visualize in line graph."""
+    dftotal = pd.DataFrame({"total": df.sum(axis=1)})
+    dftotal["date"] = df["date"]
+    dftotal = dftotal.groupby(dftotal["date"]).mean()
+    print(len(df.columns)-1)
+    dfaverage = dftotal/(len(df.columns)-1)
+    return (dfaverage * 100)
+
+# Pull data from the collection.
+# Uses st.cache to only rerun when the query changes or after 10 min.
+@st.cache(ttl=600)
+def get_from_database(org, assignment):
+    """Query data from database."""
+    output = db.StudentData.find({"class": org, "assignment": assignment},{"_id": 0, "data": 1})
+    output = [document["data"] for document in output]
+    df = pd.DataFrame(output)
+    return df
 
 def main():
     if "classes" not in st.session_state:
@@ -56,10 +73,13 @@ def main():
     st.session_state["class"] = st.sidebar.selectbox("Select a class", st.session_state["classes"],index=0)
     st.session_state["assignments"] = st.sidebar.selectbox("Select a assignment", get_assignment(st.session_state["class"]),index=0)
     st.session_state["Type"] = st.selectbox("Select a graph", ["Bar", "Line"])
-    data = get_bar_data(st.session_state["class"], st.session_state["assignments"])
+    query = get_from_database(st.session_state["class"],st.session_state["assignments"])
     if st.session_state["Type"] == "Line":
-        st.line_chart(data)
+        data = get_line_data(query)
+        fig = px.line(data, markers=True)
+        fig.update_yaxes(range=[0,100])
     elif st.session_state["Type"] == "Bar":
+        data = get_bar_data(query)
         switch = st.checkbox("Switch Orientation")
         if switch:
             st.session_state["Orientation"] = "h"
