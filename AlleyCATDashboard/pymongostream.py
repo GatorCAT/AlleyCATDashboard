@@ -76,7 +76,7 @@ def main():
     if st.session_state["Type"] == "Line":
         data = get_line_data(query)
         fig = px.line(data, labels={"value": "Average Checks Completed"}, markers=True)
-        fig.update_yaxes(range=[0,100])
+        fig.update_yaxes(range=[0,100.5])
     elif st.session_state["Type"] == "Bar":
         data = get_bar_data(query)
         switch = st.checkbox("Switch Orientation")
@@ -84,9 +84,10 @@ def main():
             st.session_state["Orientation"] = "h"
         else:
             st.session_state["Orientation"] = ""
-        fig = px.bar(data, labels={"index": "Checks", "value": "Average Checks Completed"},width=800,height=1000,orientation=st.session_state["Orientation"])
+        fig = px.bar(data, labels={"index": "Checks", "value": "Average Checks Completed"},width=800,height=500,orientation=st.session_state["Orientation"])
         fig.update_layout(showlegend=False)
         fig.update_traces(width=.5)
+        fig.update_xaxes(tickangle=45)
     st.plotly_chart(fig)
 
 if __name__ == "__main__":
